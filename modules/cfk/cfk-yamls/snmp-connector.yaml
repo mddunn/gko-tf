@@ -1,0 +1,24 @@
+apiVersion: platform.confluent.io/v1beta1
+kind: Connector
+metadata:
+  name: snmp-source
+  namespace: var.namespace
+spec:
+  class: "io.confluent.connect.snmp.SnmpTrapSourceConnector"
+  taskMax: 1
+  connectClusterRef:
+    name: connect
+  connectRest:
+    authentication:
+      type: basic
+      basic:
+        secretRef: connector-basic
+  configs:
+  snmp.v3.enabled: "true"
+  kafka.topic: "snmp-kafka-topic"
+  snmp.batch.size: "50"
+  snmp.listen.address: "<ip-address to listen trap from>"
+  snmp.listen.port: "<port to listen trap from>"
+  auth.password: "<Auth-Password>"
+  privacy.password: "<privacy-password>"
+  security.name: "<security-name>"

@@ -1,0 +1,110 @@
+apiVersion: platform.confluent.io/v1beta1
+kind: Connect
+metadata:
+  name: connect
+  namespace: confluent
+spec:
+  replicas: 1
+  image:
+    application: confluentinc/cp-server-connect:7.3.1
+    init: confluentinc/confluent-init-container:2.5.1
+  license:
+    globalLicense: true
+  podTemplate:
+    probe:
+      livenessProbe:
+        failureThreshold: 10
+        initialDelaySeconds: 360
+        periodSeconds: 10
+        successThreshold: 1
+        tcpSocket:
+          port: 8083
+        timeoutSeconds: 30
+      readinessProbe:
+        failureThreshold: 3
+        initialDelaySeconds: 180
+        periodSeconds: 10
+        successThreshold: 1
+        tcpSocket:
+          port: 8083
+        timeoutSeconds: 10
+    podSecurityContext:
+      fsGroup: 1000
+      runAsUser: 1000
+      runAsNonRoot: true
+    resources:
+      requests:
+        memory: 1Gi
+        cpu: 250m
+      limits:
+        memory: 2Gi
+        cpu: 1
+    topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: "topology.kubernetes.io/zone"
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchExpressions:
+            - key: app
+              operator: In
+              values:
+                - connect
+  connectorOverridePolicy: All
+  authentication:
+    type: basic
+    basic:
+      secretRef: connect-basic
+  configOverrides:
+    log4j:
+      - log4j.logger.io.confluent.connect.http=DEBUG
+      - org.apache.kafka.connect=DEBUG
+    jvm:
+      - "-Xmx1g"
+      - "-Xms1g"
+    server:
+      - database.history.kafka.bootstrap.servers=${data.confluent_kafka_cluster.cluster.bootstrap_endpoint}
+      - database.history.consumer.security.protocol=SASL_SSL
+      - database.history.consumer.ssl.endpoint.identification.algorithm=https
+      - database.history.consumer.sasl.mechanism=PLAIN
+      - database.history.consumer.sasl.jaas.config= org.apache.kafka.common.security.plain.PlainLoginModule required username="${file:/mnt/secrets/connect-cloud-plain/plain.txt:username}" password="${file:/mnt/secrets/connect-cloud-plain/plain.txt:password}"
+      - database.history.producer.security.protocol=SASL_SSL
+      - database.history.producer.ssl.endpoint.identification.algorithm=https
+      - database.history.producer.sasl.mechanism=PLAIN
+      - database.history.producer.sasl.jaas.config= org.apache.kafka.common.security.plain.PlainLoginModule required username="${file:/mnt/secrets/connect-cloud-plain/plain.txt:username}" password="${file:/mnt/secrets/connect-cloud-plain/plain.txt:password}"
+      - ssl.endpoint.identification.algorithm=https
+      - consumer.ssl.endpoint.identification.algorithm=https
+      - producer.ssl.endpoint.identification.algorithm=https
+      - producer.enable.idempotence=true
+      - producer.acks=all
+  dependencies:
+    kafka:
+      bootstrapEndpoint: data.confluent_kafka_cluster.cluster.bootstrap_endpoint
+      authentication:
+        type: plain
+        jaasConfig:
+          secretRef: cloud-plain
+      tls:
+        enabled: true
+        ignoreTrustStoreConfig: true
+    schemaRegistry:
+      url: data.confluent_schema_registry_cluster.sr.rest_endpoint
+      authentication:
+        type: basic
+        basic:
+          secretRef: cloud-sr-access
+  build:
+    type: onDemand
+    onDemand:
+      plugins:
+        locationType: confluentHub
+        confluentHub:
+          - name: kafka-connect-syslog
+            owner: confluentinc
+            version: 1.5.1
+          - name: kafka-connect-snmp
+            owner: confluentinc
+            version: 1.2.1
+          - name: kafka-connect-jdbc
+            owner: confluentinc
+            version: 10.6.0
+      storageLimit: 20G

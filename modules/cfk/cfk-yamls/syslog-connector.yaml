@@ -1,0 +1,20 @@
+apiVersion: platform.confluent.io/v1beta1
+kind: Connector
+metadata:
+  name: syslog-source
+  namespace: var.namespace
+spec:
+  class: "io.confluent.connect.syslog.SyslogSourceConnector"
+  taskMax: 1
+  connectClusterRef:
+    name: connect
+  connectRest:
+    authentication:
+      type: basic
+      basic:
+        secretRef: connector-basic
+  configs:
+    syslog.port: "5454"
+    syslog.listener: "TCP"
+    confluent.topic.bootstrap.servers: "<URL>:9092"
+    confluent.topic.replication.factor: "1"

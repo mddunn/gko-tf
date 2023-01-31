@@ -1,0 +1,25 @@
+apiVersion: platform.confluent.io/v1beta1
+kind: Connector
+metadata:
+  name: jdbc-source
+  namespace: var.namespace
+spec:
+  class: "io.confluent.connect.jdbc.JdbcSourceConnector"
+  taskMax: 1
+  connectClusterRef:
+    name: connect
+  connectRest:
+    authentication:
+      type: basic
+      basic:
+        secretRef: connector-basic
+  configs:
+    kafka.topic: "tf-http-source-test"
+    connector.class": "io.confluent.connect.jdbc.JdbcSourceConnector"
+    connection.url: "jdbc:mysql://localhost:3306"
+    connection.user: env.MYSQL_CONNECTION_USER
+    connection.password: env.MYSQL_CONNECTION_PASSWORD
+    mode: "incrementing"
+    incrementing.column.name: "id"
+    topic.prefix: ""
+    table.whitelist": "customers"
