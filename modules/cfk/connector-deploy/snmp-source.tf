@@ -21,7 +21,7 @@ resource "kubernetes_manifest" "jdbc-source-connector" {
           "type" = "basic"
         }
       }
-      "kafka.topic"         = "snmp-kafka-topic"
+      "kafka.topic"         = var.topic_names
       "privacy.password"    = "<privacy-password>"
       "security.name"       = "<security-name>"
       "snmp.batch.size"     = "50"

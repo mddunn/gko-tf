@@ -9,8 +9,7 @@ resource "kubernetes_manifest" "syslog-source-connector" {
     "spec" = {
       "class"   = "io.confluent.connect.syslog.SyslogSourceConnector"
       "configs" = {
-        "confluent.topic.bootstrap.servers"  = "<URL>:9092"
-        "confluent.topic.replication.factor" = "1"
+        "topic" = var.topic_names
         "syslog.listener"                    = "TCP"
         "syslog.port"                        = "5454"
       }
