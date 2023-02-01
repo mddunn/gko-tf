@@ -4,6 +4,14 @@ terraform {
       source  = "confluentinc/confluent"
       version = "1.26.0"
     }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = ">= 2.0.0"
+    }
+    helm = {
+      source  = "hashicorp/helm"
+      version = ">= 2.0.0"
+    }
   }
 }
 
@@ -16,4 +24,16 @@ provider "confluent" {
   kafka_rest_endpoint = var.kafka_rest_endpoint        # optionally use KAFKA_REST_ENDPOINT env var
   kafka_api_key       = var.kafka_api_key              # optionally use KAFKA_API_KEY env var
   kafka_api_secret    = var.kafka_api_secret           # optionally use KAFKA_API_SECRET env var
+}
+
+provider "kubernetes" {
+  config_path = "~/.kube/config"
+  config_context = var.context
+}
+
+provider "helm" {
+  kubernetes {
+    config_path = "~/.kube/config"
+    config_context = var.context
+  }
 }
